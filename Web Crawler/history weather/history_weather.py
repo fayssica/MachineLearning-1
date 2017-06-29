@@ -11,7 +11,7 @@ class History_weather():
         all_weather_index = all_weather_index[:30]
         print("Get all weather index!")
         result_weather = self.get_all_weather(all_weather_index)
-        result_weather.to_csv('all_weather1.csv', index=False)
+        result_weather.to_csv('all_weather.csv', index=False)
         print('Save all weather success!')
 
     def get_soup(self, url):
