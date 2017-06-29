@@ -9,7 +9,8 @@ import tensorflow as tf
 
 ### MNIST datasets ###
 LOGDIR = '/tmp/mnist_tutorial/'
-mnist = tf.contrib.learn.datasets.mnist.read_data_sets(train_dir=LOGDIR + 'data', one_hot=True)
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets(train_dir=LOGDIR + 'data', one_hot=True)
 
 def conv_layer(input, size_in, size_out, name="conv"):
   with tf.name_scope(name):
@@ -91,7 +92,19 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, use_dropout, hparam):
     if i % 5 == 0:
       [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
       writer.add_summary(s, i)
-    sess.run(train_step, feed_dict={x: batch[0], y: batch[1]})
+    if i % 100 == 99:  # Record execution statistics
+      run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+      run_metadata = tf.RunMetadata()
+      _, s = sess.run([train_step, summ],
+                      feed_dict={x: batch[0], y: batch[1]},
+                      options=run_options,
+                      run_metadata=run_metadata)
+      writer.add_run_metadata(run_metadata, 'step%03d' % i)
+      writer.add_summary(s, i)
+    else:
+      sess.run(train_step, feed_dict={x: batch[0], y: batch[1]})
+  writer.close()
+  sess.close()
 
 def make_hparam_string(learning_rate, use_two_fc, use_two_conv, use_dropout):
   conv_param = "conv=2" if use_two_conv else "conv=1"
@@ -100,18 +113,20 @@ def make_hparam_string(learning_rate, use_two_fc, use_two_conv, use_dropout):
   return "lr_%.0E,%s,%s,%s" % (learning_rate, conv_param, fc_param,dropout_param)
 
 def main():
-  # You can try adding some more learning rates
+  if tf.gfile.Exists(LOGDIR):
+    tf.gfile.DeleteRecursively(LOGDIR)
+  tf.gfile.MakeDirs(LOGDIR)
+  #Add other param to try different learning rate
   for learning_rate in [1E-4]:
-
-    # Include "False" as a value to try different model architectures
+    # Try different model architectures
     for use_two_fc in [True, False]:
       for use_two_conv in [True, False]:
         for use_dropout in [True, False]:
-          # Construct a hyperparameter string for each one (example: "lr_1E-3,fc=2,conv=2)
+          # Construct a hyperparameter string for each one (example: "lr_1E-4,fc=2,conv=2,dropout)
           hparam = make_hparam_string(learning_rate, use_two_fc, use_two_conv, use_dropout)
           print('Starting run for %s' % hparam)
 
-  	    # Actually run with the new settings
+          # Actually run with the new settings
           mnist_model(learning_rate, use_two_fc, use_two_conv, use_dropout, hparam)
 
 
