@@ -99,7 +99,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, use_dropout, hparam):
                       feed_dict={x: batch[0], y: batch[1]},
                       options=run_options,
                       run_metadata=run_metadata)
-      writer.add_run_metadata(run_metadata, 'step%03d' % i)
+      writer.add_run_metadata(run_metadata, 'step%03d' % i) #add_run_metadata(run_metadata, tag, global_step=None)
       writer.add_summary(s, i)
     else:
       sess.run(train_step, feed_dict={x: batch[0], y: batch[1]})
